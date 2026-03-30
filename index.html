@@ -1158,7 +1158,6 @@ if (typeof checkMissionProgress === 'function') {
                             shakeY = (Math.random() - 0.5) * 0.002;
                         }
                         
-                        // זוויות שונות לכטב"ם (רואים יפה את הכנפיים) או טיל
                         const pullBack = trackedMissile.isUav ? 0.3 : 0.2;
                         const pullUp = trackedMissile.isUav ? 0.2 : 0.15;
 
@@ -1172,7 +1171,9 @@ if (typeof checkMissionProgress === 'function') {
                         
                         const lookTarget = mWorldPos.clone()
                             .add(mDir.clone().multiplyScalar(1.5)) 
-            camera.lookAt(lookTarget);
+                            .sub(mUp.clone().multiplyScalar(0.2)); 
+
+                        camera.lookAt(lookTarget);
                     } else if (missiles.length === 0) {
                         controls.enabled = true;
                         document.getElementById('hud-target').innerText = "AWAITING COMMAND";
