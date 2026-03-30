@@ -1186,7 +1186,12 @@ if (typeof checkMissionProgress === 'function') {
             renderer.render(scene, camera);
         }
 
-        window.onload = init3D;// --- Mission System Logic ---
+        window.onload = () => {
+    init3D();
+    if (typeof updateMissionUI === 'function') {
+        updateMissionUI();
+    }
+};
 let gameState = {
     currentMission: 1,
     interceptedCount: 0
