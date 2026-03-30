@@ -3,19 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <title>Missile Strike Simulator | Free Online 3D Game</title>
-    <meta name="description" content="Experience high-intensity missile simulation in your browser. Launch, track, and strike targets with precision in Missile Strike Simulator. Play now for free!">
-    <meta name="keywords" content="Missile Strike Simulator, 3D missile game, simulation, Three.js game, free online game">
-
+    <title>Missile Strike Simulator</title>
+    <!-- Tailwind CSS for UI styling -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js for 3D graphics -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-    <meta name="google-site-verification" content="WQDVd9Zjkh9dmTvcb2VuYfems8bZyLR9dUYCUuRdd-M" />
-<meta property="og:image" content="https://raw.githubusercontent.com/Missile-Strike-Games/Missile-Strike-Simulator/main/thumbnail.jpg">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta property="og:type" content="website">
     <style>
         body { margin: 0; overflow: hidden; background-color: #050505; color: white; font-family: 'Inter', sans-serif; }
         
@@ -76,7 +69,7 @@
         .hud-warning { color: #facc15; font-weight: bold; animation: pulse 1s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        /* AI Intel Report Section - Redesigned to look tactical */
+        /* AI Intel Report Section */
         #ai-report-panel {
             background: rgba(5, 15, 5, 0.95); border: 1px solid #10b981; border-radius: 6px; 
             padding: 10px; margin-top: 10px; display: none; box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
@@ -84,9 +77,63 @@
         .typewriter { font-family: 'Courier New', Courier, monospace; font-size: 0.75rem; color: #34d399; line-height: 1.4; }
         .typewriter ul { padding-left: 15px; margin: 5px 0; }
         .typewriter li { margin-bottom: 3px; }
+
+        /* Mission Modal */
+        #mission-modal.active { display: flex; animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
     </style>
 </head>
 <body>
+
+    <!-- Welcome / Instructions Modal -->
+    <div id="welcome-modal" class="fixed inset-0 bg-black/95 z-[200] flex items-center justify-center backdrop-blur-md p-4">
+        <div class="bg-slate-900 border border-blue-500 rounded-lg max-w-2xl w-full shadow-[0_0_50px_rgba(59,130,246,0.4)] flex flex-col overflow-hidden">
+            
+            <!-- Logo Image Banner (Pulls thumbnail.jpg from the same folder) -->
+            <div class="w-full relative bg-black h-48 sm:h-64">
+                <img src="./thumbnail.jpg" alt="Missile Strike Simulator" class="w-full h-full object-cover opacity-90 border-b border-blue-500" onerror="this.style.display='none';">
+                <div class="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-slate-900 to-transparent"></div>
+            </div>
+
+            <div class="p-6 sm:p-8 relative">
+                <h1 class="text-2xl sm:text-3xl font-bold text-blue-400 mb-2 tracking-widest uppercase text-center drop-shadow-lg">Def-Com Terminal</h1>
+                <div class="h-px w-full bg-gradient-to-r from-transparent via-blue-500 to-transparent mb-6"></div>
+                
+                <div class="text-slate-300 text-sm mb-8 font-mono leading-relaxed">
+                    <p class="text-white font-bold text-base mb-3">Welcome, Commander.</p>
+                    <p class="mb-4">You are now connected to the Global Strike & Defense network. Please review the system controls:</p>
+                    <ul class="list-none space-y-2 text-slate-400 grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                        <li><span class="text-blue-500 mr-2">▶</span><strong class="text-slate-200">Initiate Strike:</strong> Select Origin & Target.</li>
+                        <li><span class="text-blue-500 mr-2">▶</span><strong class="text-slate-200">Air Defense:</strong> Toggle interceptors.</li>
+                        <li><span class="text-blue-500 mr-2">▶</span><strong class="text-slate-200">Camera View:</strong> Switch to POV tracking.</li>
+                        <li><span class="text-blue-500 mr-2">▶</span><strong class="text-slate-200">Sim Speed:</strong> Fast-forward up to 500x.</li>
+                        <li><span class="text-blue-500 mr-2">▶</span><strong class="text-slate-200">AI Intel:</strong> Generate BDA reports.</li>
+                    </ul>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-4 mt-4">
+                    <button id="btn-tutorial" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 sm:py-4 px-4 rounded transition-all tracking-widest uppercase text-sm shadow-[0_0_20px_rgba(59,130,246,0.6)] hover:scale-[1.02] active:scale-95">
+                        Start Tutorial
+                    </button>
+                    <button id="btn-sandbox" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3 sm:py-4 px-4 rounded border border-slate-600 transition-all tracking-widest uppercase text-sm hover:scale-[1.02] active:scale-95">
+                        Skip to Sandbox
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mission Accomplished Modal -->
+    <div id="mission-modal" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center backdrop-blur-sm">
+        <div class="bg-slate-900 border-2 border-emerald-500 p-8 rounded-lg max-w-sm w-full text-center shadow-[0_0_40px_rgba(16,185,129,0.4)]">
+            <h2 class="text-3xl font-bold text-white mb-2 tracking-widest uppercase">Mission<br>Accomplished</h2>
+            <div class="h-1 w-20 bg-emerald-500 mx-auto mb-4"></div>
+            <p class="text-slate-300 mb-8 font-mono text-sm" id="modal-desc">Objective successfully completed.</p>
+            <button id="modal-continue-btn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-6 rounded transition-colors tracking-widest uppercase shadow-[0_0_15px_rgba(16,185,129,0.5)]">
+                Acknowledge
+            </button>
+        </div>
+    </div>
 
     <!-- POV HUD Overlay -->
     <div id="pov-hud">
@@ -116,23 +163,33 @@
             </h1>
         </div>
 
-        <!-- Dashboard Stats -->
-        <div class="grid grid-cols-3 gap-2 mb-4 flex-shrink-0">
-            <div class="stat-box">
-                <div class="text-[0.65rem] text-slate-400 uppercase tracking-wider">Launched</div>
-                <div id="statLaunched" class="stat-val text-white">0</div>
-            </div>
-            <div class="stat-box">
-                <div class="text-[0.65rem] text-slate-400 uppercase tracking-wider">Intercepted</div>
-                <div id="statIntercepted" class="stat-val text-blue-400">0</div>
-            </div>
-            <div class="stat-box">
-                <div class="text-[0.65rem] text-slate-400 uppercase tracking-wider">Impacts</div>
-                <div id="statHits" class="stat-val text-red-500">0</div>
+        <!-- Compact Mission Control Panel -->
+        <div id="mission-panel" class="bg-slate-800/80 p-2 rounded border border-blue-500 mb-2 relative overflow-hidden flex-shrink-0 flex flex-col gap-1">
+            <div class="absolute top-0 right-0 w-10 h-10 bg-blue-500/10 rounded-bl-full"></div>
+            <div class="text-[0.6rem] font-bold text-blue-400 uppercase tracking-widest" id="mission-title">Mission 1: First Strike</div>
+            <div class="text-[0.65rem] text-slate-300 leading-tight" id="mission-desc">Launch a single missile to test systems and calibrate radar.</div>
+            <div class="w-full bg-slate-900 rounded-full h-1 mt-1 border border-slate-700">
+                <div class="bg-blue-500 h-1 rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]" id="mission-progress" style="width: 0%"></div>
             </div>
         </div>
 
-        <div class="flex-1 flex flex-col gap-3 overflow-y-auto pr-1 pb-1">
+        <!-- Dashboard Stats -->
+        <div class="grid grid-cols-3 gap-2 mb-2 flex-shrink-0">
+            <div class="stat-box py-1">
+                <div class="text-[0.6rem] text-slate-400 uppercase tracking-wider">Launched</div>
+                <div id="statLaunched" class="stat-val text-white text-lg mt-0.5">0</div>
+            </div>
+            <div class="stat-box py-1">
+                <div class="text-[0.6rem] text-slate-400 uppercase tracking-wider">Intercepted</div>
+                <div id="statIntercepted" class="stat-val text-blue-400 text-lg mt-0.5">0</div>
+            </div>
+            <div class="stat-box py-1">
+                <div class="text-[0.6rem] text-slate-400 uppercase tracking-wider">Impacts</div>
+                <div id="statHits" class="stat-val text-red-500 text-lg mt-0.5">0</div>
+            </div>
+        </div>
+
+        <div class="flex-1 flex flex-col gap-2 overflow-y-auto pr-1 pb-1">
             
             <button id="aiScenarioBtn" class="w-full bg-slate-700 hover:bg-slate-600 text-teal-300 font-bold py-1.5 px-4 rounded shadow-[0_0_10px_rgba(20,184,166,0.3)] border border-teal-800 transition-all text-[0.7rem] uppercase tracking-wider flex justify-center items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72Z"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 3H9"/></svg>
@@ -142,30 +199,30 @@
             <!-- Source & Target side-by-side -->
             <div class="grid grid-cols-2 gap-2">
                 <div class="flex flex-col gap-1 relative">
-                    <label class="text-[0.7rem] font-semibold text-slate-300 uppercase">Origin</label>
+                    <label class="text-[0.65rem] font-semibold text-slate-300 uppercase">Origin</label>
                     <input type="text" id="sourceCity" autocomplete="off" placeholder="Tehran..." class="bg-slate-800 text-sm text-white border border-slate-600 p-1.5 rounded focus:outline-none focus:border-blue-500" value="Tehran">
                     <div id="sourceSuggestions" class="autocomplete-list"></div>
                 </div>
                 <div class="flex flex-col gap-1 relative">
-                    <label class="text-[0.7rem] font-semibold text-slate-300 uppercase">Target</label>
+                    <label class="text-[0.65rem] font-semibold text-slate-300 uppercase">Target</label>
                     <input type="text" id="targetCity" autocomplete="off" placeholder="Tel Aviv..." class="bg-slate-800 text-sm text-white border border-slate-600 p-1.5 rounded focus:outline-none focus:border-red-500" value="Tel Aviv">
                     <div id="targetSuggestions" class="autocomplete-list"></div>
                 </div>
             </div>
 
             <div class="flex flex-col gap-1">
-                <label class="text-[0.7rem] font-semibold text-slate-300 uppercase">Munition Type</label>
+                <label class="text-[0.65rem] font-semibold text-slate-300 uppercase">Munition Type</label>
                 <select id="missileType" class="bg-slate-800 text-sm text-white border border-slate-600 p-1.5 rounded focus:outline-none focus:border-blue-500">
                     <option value="mrbm">MRBM (Medium Range Missile)</option>
                     <option value="icbm">ICBM (Intercontinental)</option>
                     <option value="hypersonic">Hypersonic Glide Vehicle</option>
                     <option value="cruise">Cruise Missile</option>
-                    <option value="uav">UAV (Combat Drone / כטב"ם)</option>
+                    <option value="uav">UAV (Combat Drone)</option>
                 </select>
             </div>
 
             <div class="flex flex-col gap-1">
-                <label class="text-[0.7rem] font-semibold text-slate-300 uppercase">Camera View</label>
+                <label class="text-[0.65rem] font-semibold text-slate-300 uppercase">Camera View</label>
                 <select id="cameraMode" class="bg-slate-800 text-sm text-white border border-slate-600 p-1.5 rounded focus:outline-none focus:border-blue-500">
                     <option value="free">Free Orbit (Default)</option>
                     <option value="pov">Target Cam (POV Auto-Track)</option>
@@ -175,42 +232,42 @@
             <!-- Count & Speed side-by-side -->
             <div class="grid grid-cols-2 gap-2 items-end">
                 <div class="flex flex-col gap-1">
-                    <label class="text-[0.7rem] font-semibold text-slate-300 uppercase">Volley Size</label>
+                    <label class="text-[0.65rem] font-semibold text-slate-300 uppercase">Volley Size</label>
                     <input type="number" id="missileCount" min="1" max="300" value="1" class="bg-slate-800 text-sm text-white border border-slate-600 p-1.5 rounded focus:outline-none focus:border-blue-500 text-center">
                 </div>
                 <div class="flex flex-col gap-1">
                     <div class="flex justify-between items-center">
-                        <label class="text-[0.7rem] font-semibold text-slate-300 uppercase">Sim Speed</label>
+                        <label class="text-[0.65rem] font-semibold text-slate-300 uppercase">Sim Speed</label>
                         <span id="speedValue" class="text-[0.7rem] text-blue-400 font-bold">10x</span>
                     </div>
-                    <input type="range" id="simSpeed" min="1" max="500" value="10" class="w-full accent-blue-500 mb-2">
+                    <input type="range" id="simSpeed" min="1" max="500" value="10" class="w-full accent-blue-500 mb-1.5">
                 </div>
             </div>
 
             <!-- Toggles: Air Defense & Sound -->
             <div class="grid grid-cols-2 gap-2">
-                <div class="flex flex-col items-center justify-center bg-slate-800/80 p-2 rounded border border-slate-700">
-                    <label class="text-[0.65rem] font-semibold text-slate-300 uppercase mb-1" for="airDefense">Air Defense</label>
+                <div class="flex flex-col items-center justify-center bg-slate-800/80 p-1.5 rounded border border-slate-700">
+                    <label class="text-[0.6rem] font-semibold text-slate-300 uppercase mb-1" for="airDefense">Air Defense</label>
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" id="airDefense" class="sr-only peer" checked>
-                        <div class="w-9 h-5 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500"></div>
+                        <div class="w-8 h-4 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-500"></div>
                     </label>
                 </div>
-                <div class="flex flex-col items-center justify-center bg-slate-800/80 p-2 rounded border border-slate-700">
-                    <label class="text-[0.65rem] font-semibold text-slate-300 uppercase mb-1" for="soundToggle">Sound FX</label>
+                <div class="flex flex-col items-center justify-center bg-slate-800/80 p-1.5 rounded border border-slate-700">
+                    <label class="text-[0.6rem] font-semibold text-slate-300 uppercase mb-1" for="soundToggle">Sound FX</label>
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" id="soundToggle" class="sr-only peer" checked>
-                        <div class="w-9 h-5 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-teal-500"></div>
+                        <div class="w-8 h-4 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-teal-500"></div>
                     </label>
                 </div>
             </div>
             
-            <button id="launchBtn" class="mt-2 w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded shadow-[0_0_15px_rgba(220,38,38,0.7)] transition-all uppercase text-[0.85rem] tracking-widest active:scale-95 flex-shrink-0 relative">
+            <button id="launchBtn" class="mt-1 w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded shadow-[0_0_15px_rgba(220,38,38,0.7)] transition-all uppercase text-[0.8rem] tracking-widest active:scale-95 flex-shrink-0 relative">
                 Initiate Strike
             </button>
             
-            <button id="aiReportBtn" class="mt-1 w-full bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold py-2 px-4 rounded border border-emerald-800 transition-all text-[0.7rem] uppercase tracking-wider flex justify-center items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+            <button id="aiReportBtn" class="mt-1 w-full bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold py-1.5 px-4 rounded border border-emerald-800 transition-all text-[0.65rem] uppercase tracking-wider flex justify-center items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
                 Generate Intel SitRep
             </button>
 
@@ -219,31 +276,20 @@
                 <div class="flex items-center justify-between mb-1 border-b border-emerald-800/50 pb-1">
                     <div class="flex items-center gap-2">
                         <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                        <span class="text-[0.65rem] text-emerald-400 font-bold uppercase tracking-widest">TACTICAL BDA REPORT</span>
+                        <span class="text-[0.6rem] text-emerald-400 font-bold uppercase tracking-widest">TACTICAL BDA REPORT</span>
                     </div>
                 </div>
-                <div id="ai-report-content" class="typewriter h-[100px] overflow-y-auto">Awaiting telemetry...</div>
+                <div id="ai-report-content" class="typewriter h-[80px] overflow-y-auto">Awaiting telemetry...</div>
             </div>
 
         </div>
 
         <!-- Event Log -->
-        <div class="flex-1 min-h-[100px] flex flex-col bg-slate-900 border border-slate-700 rounded p-2 mt-3 overflow-hidden">
-            <h3 class="text-[0.65rem] font-bold text-slate-400 uppercase mb-1 border-b border-slate-700 pb-1">System Logs</h3>
+        <div class="flex-1 min-h-[80px] flex flex-col bg-slate-900 border border-slate-700 rounded p-2 mt-2 overflow-hidden">
+            <h3 class="text-[0.6rem] font-bold text-slate-400 uppercase mb-1 border-b border-slate-700 pb-1">System Logs</h3>
             <div id="log-container" class="flex-1 overflow-y-auto pr-1 flex flex-col justify-start">
                 <div class="log-entry log-info">System Ready. Awaiting orders.</div>
-          <div id="mission-panel" class="mt-4 p-3 bg-black/60 border border-cyan-500/50 rounded-lg shadow-[0_0_15px_rgba(6,182,212,0.2)]">
-    <div class="flex justify-between items-center mb-2">
-        <h3 class="text-cyan-400 text-[10px] font-bold uppercase tracking-widest italic">Active Mission</h3>
-        <span id="mission-id" class="bg-cyan-900 text-cyan-300 px-1.5 py-0.5 rounded text-[9px] font-mono">01</span>
-    </div>
-    <div id="mission-title" class="text-white text-sm font-bold leading-tight uppercase">First Strike</div>
-    <div id="mission-desc" class="text-gray-400 text-[10px] mt-1 italic leading-relaxed border-b border-white/5 pb-2">Launch 1 missile to test global reach.</div>
-    
-    <div class="w-full bg-gray-800 h-1 mt-3 rounded-full overflow-hidden border border-gray-700">
-        <div id="mission-progress" class="bg-gradient-to-r from-cyan-600 to-blue-400 h-full transition-all duration-700" style="width: 0%"></div>
-    </div>
-</div>  </div>
+            </div>
         </div>
     </div>
 
@@ -251,6 +297,94 @@
     <div id="canvas-container"></div>
 
     <script>
+        // --- Mission State Machine ---
+        let currentMission = 1; // 1 = Tutorial, 4 = Sandbox
+        let missionProgress = 0; // 0 to 100
+        let manualIntercepts = 0;
+        let enemyAttackInterval = null;
+
+        const missionsData = [
+            { id: 1, title: "Mission 1: First Strike", desc: "Launch a single missile to test systems and calibrate radar." },
+            { id: 2, title: "Mission 2: Massive Barrage", desc: "Launch a massive volley of at least 300 missiles to test load capacity." },
+            { id: 3, title: "Mission 3: Iron Dome", desc: "Defend the homeland! Click on 5 incoming red enemy missiles in the air to manually intercept them." },
+            { id: 4, title: "Sandbox Mode", desc: "Training complete! All systems are open for unlimited free use." }
+        ];
+
+        // --- Welcome Modal Logic ---
+        document.getElementById('btn-tutorial').addEventListener('click', () => {
+            document.getElementById('welcome-modal').classList.add('hidden');
+            document.getElementById('welcome-modal').classList.remove('flex');
+            currentMission = 1;
+            missionProgress = 0;
+            updateMissionUI();
+            if (audioCtx.state === 'suspended' && soundEnabled) audioCtx.resume();
+        });
+
+        document.getElementById('btn-sandbox').addEventListener('click', () => {
+            document.getElementById('welcome-modal').classList.add('hidden');
+            document.getElementById('welcome-modal').classList.remove('flex');
+            currentMission = 4;
+            updateMissionUI();
+            if (audioCtx.state === 'suspended' && soundEnabled) audioCtx.resume();
+        });
+
+        function updateMissionUI() {
+            const missionPanel = document.getElementById('mission-panel');
+            
+            if (currentMission === 4) {
+                // Hide panel completely in sandbox mode to save space!
+                missionPanel.style.display = 'none';
+            } else {
+                missionPanel.style.display = 'flex';
+                const data = missionsData[currentMission - 1];
+                document.getElementById('mission-title').innerText = data.title;
+                document.getElementById('mission-desc').innerText = data.desc;
+                document.getElementById('mission-progress').style.width = `${missionProgress}%`;
+            }
+        }
+
+        function completeMission() {
+            const modal = document.getElementById('mission-modal');
+            const desc = document.getElementById('modal-desc');
+            
+            if (currentMission === 1) desc.innerText = "System calibration complete. Proceed to next phase.";
+            if (currentMission === 2) desc.innerText = "Load capacity verified. Prepare for defensive operations!";
+            if (currentMission === 3) desc.innerText = "Homeland defended! Airspace is secure.";
+            
+            playSound('intercept'); 
+            modal.classList.add('active');
+        }
+
+        document.getElementById('modal-continue-btn').addEventListener('click', () => {
+            document.getElementById('mission-modal').classList.remove('active');
+            
+            if (currentMission < 4) {
+                currentMission++;
+                missionProgress = 0;
+                updateMissionUI();
+                
+                if (currentMission === 3) {
+                    startEnemyAttack();
+                }
+                if (currentMission === 4) {
+                    clearInterval(enemyAttackInterval); 
+                }
+            }
+        });
+
+        function startEnemyAttack() {
+            addLog("ALERT: Enemy launch detected! Prepare manual intercepts.", "danger");
+            enemyAttackInterval = setInterval(() => {
+                const tehranLat = 35.6892, tehranLon = 51.3890;
+                const tlvLat = 32.0853, tlvLon = 34.7818;
+                const sVec = latLongToVector3(tehranLat, tehranLon, EARTH_RADIUS);
+                const tVec = latLongToVector3(tlvLat, tlvLon, EARTH_RADIUS);
+                const dist = 1580; 
+                
+                createEntity(sVec, tVec, 'mrbm', dist, 0, "Tel Aviv", true);
+            }, 3500);
+        }
+
         // --- Web Audio API (Sound System) ---
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         const audioCtx = new AudioContext();
@@ -260,11 +394,6 @@
             soundEnabled = e.target.checked;
             if(soundEnabled && audioCtx.state === 'suspended') audioCtx.resume();
         });
-        
-        // Initialize audio on first click anywhere
-        document.body.addEventListener('click', () => {
-            if (audioCtx.state === 'suspended' && soundEnabled) audioCtx.resume();
-        }, { once: true });
 
         function playSound(type) {
             if (!soundEnabled || audioCtx.state === 'suspended') return;
@@ -276,7 +405,6 @@
             gainNode.connect(audioCtx.destination);
             
             if (type === 'launch') {
-                // צליל שיגור רך ועמוק יותר (לא מפחיד)
                 osc.type = 'sine';
                 osc.frequency.setValueAtTime(120, now);
                 osc.frequency.exponentialRampToValueAtTime(40, now + 1.2);
@@ -285,7 +413,6 @@
                 osc.start(now);
                 osc.stop(now + 1.2);
             } else if (type === 'explosion') {
-                // פיצוץ עמום ומרוחק יותר (בום עדין ולא רעש לבן צורם)
                 const bufferSize = audioCtx.sampleRate * 1.0;
                 const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
                 const data = buffer.getChannelData(0);
@@ -307,7 +434,6 @@
                 noise.start(now);
                 noise.stop(now + 1.0);
             } else if (type === 'intercept') {
-                // צליל יירוט קצר ועדין (כמו קליק טקטי)
                 osc.type = 'sine';
                 osc.frequency.setValueAtTime(1000, now);
                 osc.frequency.exponentialRampToValueAtTime(300, now + 0.2);
@@ -395,7 +521,6 @@
             const origin = document.getElementById('sourceCity').value;
             const target = document.getElementById('targetCity').value;
 
-            // Updated prompt to be short, tactical, and clear
             const prompt = `You are a military intelligence AI. Write a highly concise, 3-point bulleted Battle Damage Assessment (BDA) report.
             Data: ${origin} attacked ${target}. Total Launched: ${gameStats.launched}. Impacts: ${gameStats.hits}. Intercepted: ${gameStats.intercepted}.
             Rule: Output ONLY the bullet points using asterisks (*). Use short military terminology. Do not write introductory or concluding text.`;
@@ -411,12 +536,11 @@
                 
                 let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "ANALYSIS FAILED.";
                 
-                // Formating the raw text to HTML lists
                 text = text.replace(/\* (.*)/g, '<li>$1</li>');
                 text = `<ul>${text}</ul>`;
 
                 content.innerHTML = "";
-                content.innerHTML = text; // Just show it immediately, the typewriter was too slow
+                content.innerHTML = text; 
                 
             } catch (err) {
                 content.innerHTML = '<span class="text-red-500">UPLINK FAILED.</span>';
@@ -452,7 +576,6 @@
             currentCameraMode = e.target.value;
             if (currentCameraMode === 'free') {
                 controls.enabled = true;
-                // תיקון מצלמה: איפוס מרכז המיקוד חזרה לכדור הארץ כדי שאפשר יהיה לעשות זום
                 controls.target.set(0, 0, 0);
             } else if (currentCameraMode === 'pov') {
                 if (missiles.length === 0) {
@@ -537,7 +660,6 @@
             controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
             controls.dampingFactor = 0.05;
-            // התיקון לזום: 0.15 מספק מרווח בטוח מגובה הבניינים כך שהמצלמה לעולם לא תיכנס לאדמה!
             controls.minDistance = EARTH_RADIUS + 0.15; 
             controls.maxDistance = 60;
             controls.enablePan = false; 
@@ -549,6 +671,7 @@
 
             createEarth();
             createStars();
+            setupRaycaster(); 
 
             window.addEventListener('resize', () => {
                 camera.aspect = container.clientWidth / container.clientHeight;
@@ -556,6 +679,60 @@
                 renderer.setSize(container.clientWidth, container.clientHeight);
             });
             requestAnimationFrame(animate);
+        }
+
+        // --- Iron Dome Manual Intercept (Mission 3) ---
+        function setupRaycaster() {
+            const raycaster = new THREE.Raycaster();
+            const mouse = new THREE.Vector2();
+
+            renderer.domElement.addEventListener('pointerdown', (event) => {
+                if (currentMission !== 3) return; 
+
+                const rect = renderer.domElement.getBoundingClientRect();
+                mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+                mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+                raycaster.setFromCamera(mouse, camera);
+
+                const activeEnemyMissiles = missiles.filter(m => m.active && !m.intercepted && m.isEnemy);
+                const meshesToCheck = activeEnemyMissiles.map(m => m.mesh);
+
+                const intersects = raycaster.intersectObjects(meshesToCheck, true);
+
+                if (intersects.length > 0) {
+                    let hitObject = intersects[0].object;
+                    const hitMissile = activeEnemyMissiles.find(m => {
+                        let parent = hitObject;
+                        while(parent) {
+                            if (parent === m.mesh) return true;
+                            parent = parent.parent;
+                        }
+                        return false;
+                    });
+
+                    if (hitMissile) {
+                        hitMissile.intercepted = true;
+                        createExplosion(hitMissile.mesh.position, 0x00aaff, 2.5); 
+                        playSound('intercept');
+                        
+                        earth.remove(hitMissile.mesh);
+                        earth.remove(hitMissile.trail);
+                        
+                        gameStats.intercepted++;
+                        updateStatsUI();
+                        
+                        manualIntercepts++;
+                        missionProgress += 20;
+                        updateMissionUI();
+                        addLog(`MANUAL INTERCEPT SUCCESSFUL! (${manualIntercepts}/5)`, 'success');
+                        
+                        if (missionProgress >= 100) {
+                            setTimeout(completeMission, 500);
+                        }
+                    }
+                }
+            });
         }
 
         function createEarth() {
@@ -634,15 +811,7 @@
                 {x: 0, y: 0, r: 0.02, h: 1.0}, 
                 {x: 0.015, y: 0.015, r: 0.015, h: 0.5}, 
                 {x: -0.015, y: -0.015, r: 0.02, h: 0.4} 
-// עדכון התקדמות המשימה - גרסה מתוקנת
-if (typeof checkMissionProgress === 'function') {
-    // אנחנו לוקחים את המשתנה 'amount' שכבר קיים בפונקציה שלך בשורה 626
-    checkMissionProgress('launch', amount);
-}if (typeof checkMissionProgress === 'function') {
-    const amountInput = document.getElementById('missile-amount');
-    const amount = amountInput ? parseInt(amountInput.value) || 1 : 1;
-    checkMissionProgress('launch', amount);
-}
+            ];
             
             for(let i=0; i<numBuildings; i++) {
                 const dist = districts[Math.floor(Math.random() * districts.length)];
@@ -769,8 +938,7 @@ if (typeof checkMissionProgress === 'function') {
             });
         }
 
-        // שינוי הלוגיקה כדי לייצר כטב"ם או טיל לפי בחירה!
-        function createEntity(startVec, endVec, type, realDist, delayTime, targetName) {
+        function createEntity(startVec, endVec, type, realDist, delayTime, targetName, isEnemy = false) {
             const isUav = type === 'uav';
             const distRatio = realDist / EARTH_RADIUS; 
             
@@ -778,7 +946,7 @@ if (typeof checkMissionProgress === 'function') {
             if (type === 'icbm') { speed = 7.0; arc = 0.15; } 
             else if (type === 'hypersonic') { speed = 4.0; arc = 0.02; }
             else if (type === 'cruise') { speed = 0.3; arc = 0.005; }
-            else if (isUav) { speed = 0.08; arc = 0.001; } // כטב"ם - ממש איטי וטס נמוך מאוד
+            else if (isUav) { speed = 0.08; arc = 0.001; } 
             
             const arcHeight = Math.max(distRatio * arc, (type === 'cruise' || isUav) ? 0.02 : 0.05);
             const midPoint = startVec.clone().lerp(endVec, 0.5).normalize().multiplyScalar(EARTH_RADIUS + arcHeight);
@@ -789,38 +957,19 @@ if (typeof checkMissionProgress === 'function') {
             const scale = isUav ? 0.35 : 0.4; 
             
             if (isUav) {
-                // בניית כטב"ם ריאליסטי
-                // גוף (אפור כהה)
-                const body = new THREE.Mesh(new THREE.CylinderGeometry(0.03*scale, 0.03*scale, 0.6*scale, 16), new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.8 }));
-                body.rotation.x = Math.PI / 2; 
-                mGroup.add(body);
-                
-                // חרטום מעוגל
+                const body = new THREE.Mesh(new THREE.CylinderGeometry(0.03*scale, 0.03*scale, 0.6*scale, 16), new MeshStandardMaterial({ color: 0x555555, roughness: 0.8 }));
+                body.rotation.x = Math.PI / 2; mGroup.add(body);
                 const nose = new THREE.Mesh(new THREE.SphereGeometry(0.03*scale, 16, 16), new THREE.MeshStandardMaterial({ color: 0x555555 }));
-                nose.position.z = 0.3*scale;
-                mGroup.add(nose);
-                
-                // כנפיים רחבות וישרות
+                nose.position.z = 0.3*scale; mGroup.add(nose);
                 const wing = new THREE.Mesh(new THREE.BoxGeometry(0.6*scale, 0.01*scale, 0.1*scale), new THREE.MeshStandardMaterial({ color: 0x444444 }));
                 mGroup.add(wing);
-                
-                // זנב V
                 const tail1 = new THREE.Mesh(new THREE.BoxGeometry(0.15*scale, 0.01*scale, 0.05*scale), new THREE.MeshStandardMaterial({ color: 0x444444 }));
-                tail1.position.set(0.06*scale, 0.04*scale, -0.28*scale);
-                tail1.rotation.z = Math.PI / 4;
-                mGroup.add(tail1);
-                
+                tail1.position.set(0.06*scale, 0.04*scale, -0.28*scale); tail1.rotation.z = Math.PI / 4; mGroup.add(tail1);
                 const tail2 = new THREE.Mesh(new THREE.BoxGeometry(0.15*scale, 0.01*scale, 0.05*scale), new THREE.MeshStandardMaterial({ color: 0x444444 }));
-                tail2.position.set(-0.06*scale, 0.04*scale, -0.28*scale);
-                tail2.rotation.z = -Math.PI / 4;
-                mGroup.add(tail2);
-                
-                // מנוע כטב"ם - פליטה קטנה מאוד, בלי הילה
+                tail2.position.set(-0.06*scale, 0.04*scale, -0.28*scale); tail2.rotation.z = -Math.PI / 4; mGroup.add(tail2);
                 const engine = new THREE.Mesh(new THREE.ConeGeometry(0.02*scale, 0.1*scale, 8), new THREE.MeshBasicMaterial({ color: 0xffaa00, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending }));
-                engine.position.z = -0.35*scale; engine.rotation.x = -Math.PI / 2;
-                mGroup.add(engine);
+                engine.position.z = -0.35*scale; engine.rotation.x = -Math.PI / 2; mGroup.add(engine);
             } else {
-                // בניית טיל רגיל (כמו שהיה)
                 const stg1 = new THREE.Mesh(new THREE.CylinderGeometry(0.04*scale, 0.04*scale, 0.4*scale, 16), new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.3 }));
                 stg1.rotation.x = Math.PI / 2; mGroup.add(stg1);
                 const stg2 = new THREE.Mesh(new THREE.CylinderGeometry(0.035*scale, 0.04*scale, 0.2*scale, 16), new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.5 }));
@@ -840,23 +989,28 @@ if (typeof checkMissionProgress === 'function') {
                 glow.position.z = -0.3*scale; mGroup.add(glow);
             }
 
+            const hitboxGeo = new THREE.SphereGeometry(1.5, 8, 8); 
+            const hitboxMat = new THREE.MeshBasicMaterial({ visible: false });
+            const hitbox = new THREE.Mesh(hitboxGeo, hitboxMat);
+            mGroup.add(hitbox);
+
             mGroup.position.copy(startVec);
             const localLook = startVec.clone().add(curve.getTangentAt(0));
             mGroup.lookAt(localLook.applyMatrix4(earth.matrixWorld));
 
-            earth.add(mGroup);checkMissionProgress('intercept');
+            earth.add(mGroup);
 
             const trailGeo = new THREE.BufferGeometry();
             trailGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(60 * 3), 3));
             trailGeo.setDrawRange(0, 0);
-            // שובל אפור ודק לכטב"ם, שובל כתום ובולט לטיל
+            
             const trailColor = isUav ? 0xaaaaaa : 0xff4400;
             const trailOpacity = isUav ? 0.3 : 0.5;
             const trail = new THREE.Line(trailGeo, new THREE.LineBasicMaterial({ color: trailColor, transparent: true, opacity: trailOpacity }));
             earth.add(trail);
 
             missiles.push({
-                mesh: mGroup, trail, trailPts: [], curve, progress: 0, isUav: isUav,
+                mesh: mGroup, trail, trailPts: [], curve, progress: 0, isUav: isUav, isEnemy: isEnemy,
                 flightTime: realDist / speed, targetName: targetName, 
                 delay: delayTime, active: delayTime <= 0, intercepted: false, targeted: false,
                 tgtVec: endVec, interceptAttempts: 0 
@@ -890,7 +1044,6 @@ if (typeof checkMissionProgress === 'function') {
 
             btn.disabled = false; btn.innerText = "Initiate Strike"; btn.classList.replace('bg-slate-600', 'bg-red-600');
             
-            // הפעלת סאונד שיגור!
             playSound('launch');
 
             document.getElementById('sourceCity').value = srcCoord.name;
@@ -927,10 +1080,9 @@ if (typeof checkMissionProgress === 'function') {
                 const sVec = latLongToVector3(jLatS, jLonS, EARTH_RADIUS);
                 const tVec = latLongToVector3(jLatT, jLonT, EARTH_RADIUS);
                 
-                createEntity(sVec, tVec, type, realDist, i * 0.4, tgtCoord.name);
+                createEntity(sVec, tVec, type, realDist, i * 0.4, tgtCoord.name, false); 
             }
 
-            // עדכון המעקב רק אם אין משהו שעוקבים אחריו עכשיו
             if (!trackedMissile || trackedMissile.progress >= 1.0 || trackedMissile.intercepted) {
                 trackedMissile = missiles[missiles.length - count]; 
             }
@@ -940,10 +1092,20 @@ if (typeof checkMissionProgress === 'function') {
                 const worldStart = startPosLocal.clone().applyMatrix4(earth.matrixWorld);
                 const lookPos = worldStart.clone().normalize().multiplyScalar(EARTH_RADIUS + 15);
                 camera.position.copy(lookPos);
-                controls.target.set(0,0,0); // איפוס מטרה כדי לא לשבור את הזום והסיבוב
+                controls.target.set(0,0,0); 
             }
 
             if(window.innerWidth < 1024) panel.classList.add('collapsed');
+
+            if (currentMission === 1 && count === 1) {
+                missionProgress = 100;
+                updateMissionUI();
+                setTimeout(completeMission, 1000);
+            } else if (currentMission === 2 && count >= 300) {
+                missionProgress = 100;
+                updateMissionUI();
+                setTimeout(completeMission, 1000);
+            }
         }
 
         document.getElementById('launchBtn').addEventListener('click', handleLaunch);
@@ -983,10 +1145,12 @@ if (typeof checkMissionProgress === 'function') {
                 m.progress += (dt * speedMult) / m.flightTime;
 
                 if (airDefOn && !m.intercepted && m.progress > 0.40 && m.progress < 0.95 && m.interceptAttempts < 2) {
-                    if (!m.lastInterceptProgress || (m.progress - m.lastInterceptProgress) > 0.25) {
-                        m.lastInterceptProgress = m.progress;
-                        m.interceptAttempts++;
-                        spawnInterceptor(m.tgtVec, m); 
+                    if (!(currentMission === 3 && m.isEnemy)) {
+                        if (!m.lastInterceptProgress || (m.progress - m.lastInterceptProgress) > 0.25) {
+                            m.lastInterceptProgress = m.progress;
+                            m.interceptAttempts++;
+                            spawnInterceptor(m.tgtVec, m); 
+                        }
                     }
                 }
 
@@ -1116,7 +1280,7 @@ if (typeof checkMissionProgress === 'function') {
                         currentCameraMode = 'free';
                         cameraModeSelect.value = 'free';
                         controls.enabled = true;
-                        controls.target.set(0, 0, 0); // מבטיח שאפשר לעשות זום תקין!
+                        controls.target.set(0, 0, 0); 
                         addLog('Satellite link returned to free orbit mode.', 'info');
                     } else {
                         controls.enabled = false;
@@ -1182,92 +1346,15 @@ if (typeof checkMissionProgress === 'function') {
                     }
                 }
             } else {
-                const povHud = document.getElementById('pov-hud');
-                if (povHud) povHud.classList.remove('active');
+                povHud.classList.remove('active');
             }
 
             renderer.render(scene, camera);
-        } // סגירה של animate
-
-        // --- הפעלה וניהול משימות ---
-        window.onload = () => {
-            init3D();
-            if (typeof updateMissionUI === 'function') {
-                updateMissionUI();
-            }
-        };
-
-        let gameState = {
-            currentMission: 1,
-            interceptedCount: 0
-        };
-
-        const missions = {
-            1: { title: "First Strike", desc: "Launch 1 missile to test global reach.", goal: 1 },
-            2: { title: "Massive Barrage", desc: "Launch 300 missiles at once.", goal: 300 },
-            3: { title: "Iron Dome Defense", desc: "Intercept 5 incoming enemy missiles.", goal: 5 }
-        };
-
-        function updateMissionUI() {
-            const mission = missions[gameState.currentMission];
-            const titleEl = document.getElementById('mission-title');
-            const descEl = document.getElementById('mission-desc');
-            const idEl = document.getElementById('mission-id');
-
-            if (!mission) {
-                if (titleEl) titleEl.innerText = "ALL MISSIONS CLEAR";
-                if (descEl) descEl.innerText = "You have secured the globe.";
-                if (idEl) idEl.innerText = "DONE";
-                return;
-            }
-            if (idEl) idEl.innerText = "0" + gameState.currentMission;
-            if (titleEl) titleEl.innerText = mission.title;
-            if (descEl) descEl.innerText = mission.desc;
         }
 
-        function checkMissionProgress(type, count = 1) {
-            if (gameState.currentMission === 1 && type === 'launch') {
-                completeMission();
-            } else if (gameState.currentMission === 2 && type === 'launch' && count >= 300) {
-                completeMission();
-            } else if (gameState.currentMission === 3 && type === 'intercept') {
-                gameState.interceptedCount++;
-                let progress = (gameState.interceptedCount / missions[3].goal) * 100;
-                const progBar = document.getElementById('mission-progress');
-                if (progBar) progBar.style.width = progress + "%";
-                if (gameState.interceptedCount >= missions[3].goal) completeMission();
-            }
-        }
-
-        function completeMission() {
-            const progressLine = document.getElementById('mission-progress');
-            if (progressLine) progressLine.style.width = "100%";
-
-            setTimeout(() => {
-                const currentMissionData = missions[gameState.currentMission];
-                if (currentMissionData) {
-                    alert("MISSION ACCOMPLISHED: " + currentMissionData.title);
-                }
-                gameState.currentMission++;
-                updateMissionUI();
-                if (gameState.currentMission === 3) startEnemyAttack();
-            }, 600);
-        }
-
-        function startEnemyAttack() {
-            if (typeof addLog === 'function') addLog("RED ALERT: INCOMING MISSILES FROM TEHRAN", "danger");
-            const attackInterval = setInterval(() => {
-                if (gameState.currentMission !== 3) {
-                    clearInterval(attackInterval);
-                    return;
-                }
-                const origin = { lat: 35.6892, lon: 51.3890 }; 
-                const target = { lat: 31.0461, lon: 34.8516 };
-                if (typeof createMissile === 'function') {
-                    createMissile(origin, target, 'ballistic');
-                }
-            }, 5000);
-        }
+        // Initialize UI before 3D
+        updateMissionUI();
+        window.onload = init3D;
     </script>
 </body>
 </html>
