@@ -1182,42 +1182,52 @@ if (typeof checkMissionProgress === 'function') {
                         document.getElementById('hud-status').className = "text-yellow-400 font-bold";
                     }
                 }
-            } else {
-                povHud.classList.remove('active');
+            window.onload = () => {
+            init3D();
+            if (typeof updateMissionUI === 'function') {
+                updateMissionUI();
             }
+        };
 
-            renderer.render(scene, camera);
+        // --- Mission System Logic ---
+        let gameState = {
+            currentMission: 1,
+            interceptedCount: 0
+        };
+
+        const missions = {
+            1: { title: "First Strike", desc: "Launch 1 missile to test global reach.", goal: 1 },
+            2: { title: "Massive Barrage", desc: "Launch 300 missiles at once.", goal: 300 },
+            3: { title: "Iron Dome Defense", desc: "Intercept 5 incoming enemy missiles.", goal: 5 }
+        };
+
+        function updateMissionUI() {
+            const mission = missions[gameState.currentMission];
+            if (!mission) {
+                document.getElementById('mission-title').innerText = "ALL MISSIONS CLEAR";
+                document.getElementById('mission-desc').innerText = "You have secured the globe.";
+                document.getElementById('mission-id').innerText = "DONE";
+                return;
+            }
+            document.getElementById('mission-id').innerText = "0" + gameState.currentMission;
+            document.getElementById('mission-title').innerText = mission.title;
+            document.getElementById('mission-desc').innerText = mission.desc;
         }
 
-        window.onload = () => {
-    init3D();
-    if (typeof updateMissionUI === 'function') {
-        updateMissionUI();
-    }
-};
-let gameState = {
-    currentMission: 1,
-    interceptedCount: 0
-};
+        function checkMissionProgress(type, count = 1) {
+            if (gameState.currentMission === 1 && type === 'launch') {
+                completeMission();
+            } else if (gameState.currentMission === 2 && type === 'launch' && count >= 300) {
+                completeMission();
+            } else if (gameState.currentMission === 3 && type === 'intercept') {
+                gameState.interceptedCount++;
+                let progress = (gameState.interceptedCount / missions[3].goal) * 100;
+                document.getElementById('mission-progress').style.width = progress + "%";
+                if (gameState.interceptedCount >= missions[3].goal) completeMission();
+            }
+        }
 
-const missions = {
-    1: { title: "First Strike", desc: "Launch 1 missile to test global reach.", goal: 1 },
-    2: { title: "Massive Barrage", desc: "Launch 300 missiles at once.", goal: 300 },
-    3: { title: "Iron Dome Defense", desc: "Intercept 5 incoming enemy missiles.", goal: 5 }
-};
-
-function updateMissionUI() {
-    const mission = missions[gameState.currentMission];
-    if (!mission) {
-        document.getElementById('mission-title').innerText = "ALL MISSIONS CLEAR";
-        document.getElementById('mission-desc').innerText = "You have secured the globe.";
-        return;
-    }
-    document.getElementById('mission-id').innerText = "0" + gameState.currentMission;
-    document.getElementById('mission-title').innerText = mission.title;
-    document.getElementById('mission-desc').innerText = mission.desc;
-    document.getElementById('mission-progress').style.width = "0%";
-function completeMission() {
+        function completeMission() {
             const progressLine = document.getElementById('mission-progress');
             if (progressLine) progressLine.style.width = "100%";
 
@@ -1230,7 +1240,6 @@ function completeMission() {
                 gameState.currentMission++;
                 updateMissionUI();
                 
-                // אם הגענו למשימה 3 - מתחילים את מתקפת האויב
                 if (gameState.currentMission === 3) {
                     startEnemyAttack();
                 }
@@ -1241,7 +1250,6 @@ function completeMission() {
             addLog("RED ALERT: INCOMING MISSILES FROM TEHRAN", "danger");
             
             const attackInterval = setInterval(() => {
-                // אם השחקן עבר את משימה 3, מפסיקים את המתקפה
                 if (gameState.currentMission !== 3) {
                     clearInterval(attackInterval);
                     return;
@@ -1253,7 +1261,7 @@ function completeMission() {
                 if (typeof createMissile === 'function') {
                     createMissile(origin, target, 'ballistic');
                 }
-            }, 5000); // טיל כל 5 שניות
+            }, 5000);
         }
     </script>
 </body>
