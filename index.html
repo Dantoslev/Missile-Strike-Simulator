@@ -634,8 +634,11 @@
                 {x: 0, y: 0, r: 0.02, h: 1.0}, 
                 {x: 0.015, y: 0.015, r: 0.015, h: 0.5}, 
                 {x: -0.015, y: -0.015, r: 0.02, h: 0.4} 
-            ];// עדכון התקדמות המשימה
+// עדכון התקדמות המשימה - גרסה מתוקנת
 if (typeof checkMissionProgress === 'function') {
+    // אנחנו לוקחים את המשתנה 'amount' שכבר קיים בפונקציה שלך בשורה 626
+    checkMissionProgress('launch', amount);
+}if (typeof checkMissionProgress === 'function') {
     const amountInput = document.getElementById('missile-amount');
     const amount = amountInput ? parseInt(amountInput.value) || 1 : 1;
     checkMissionProgress('launch', amount);
@@ -1214,29 +1217,44 @@ function updateMissionUI() {
     document.getElementById('mission-title').innerText = mission.title;
     document.getElementById('mission-desc').innerText = mission.desc;
     document.getElementById('mission-progress').style.width = "0%";
-}
-
-function checkMissionProgress(type, count = 1) {
-    if (gameState.currentMission === 1 && type === 'launch') {
-        completeMission();
-    } else if (gameState.currentMission === 2 && type === 'launch' && count >= 300) {
-        completeMission();
-    } else if (gameState.currentMission === 3 && type === 'intercept') {
-        gameState.interceptedCount++;
-        let progress = (gameState.interceptedCount / missions[3].goal) * 100;
-        document.getElementById('mission-progress').style.width = progress + "%";
-        if (gameState.interceptedCount >= missions[3].goal) completeMission();
-    }
-}
-
 function completeMission() {
-    document.getElementById('mission-progress').style.width = "100%";
-    setTimeout(() => {
-        alert("COMPLETED: " + missions[gameState.currentMission].title);
-        gameState.currentMission++;
-        updateMissionUI();
-    }, 600);
-}
+            const progressLine = document.getElementById('mission-progress');
+            if (progressLine) progressLine.style.width = "100%";
+
+            setTimeout(() => {
+                const currentMissionData = missions[gameState.currentMission];
+                if (currentMissionData) {
+                    alert("MISSION ACCOMPLISHED: " + currentMissionData.title);
+                }
+
+                gameState.currentMission++;
+                updateMissionUI();
+                
+                // אם הגענו למשימה 3 - מתחילים את מתקפת האויב
+                if (gameState.currentMission === 3) {
+                    startEnemyAttack();
+                }
+            }, 600);
+        }
+
+        function startEnemyAttack() {
+            addLog("RED ALERT: INCOMING MISSILES FROM TEHRAN", "danger");
+            
+            const attackInterval = setInterval(() => {
+                // אם השחקן עבר את משימה 3, מפסיקים את המתקפה
+                if (gameState.currentMission !== 3) {
+                    clearInterval(attackInterval);
+                    return;
+                }
+                
+                const origin = { lat: 35.6892, lon: 51.3890 }; // טהרן
+                const target = { lat: 31.0461, lon: 34.8516 }; // ישראל
+                
+                if (typeof createMissile === 'function') {
+                    createMissile(origin, target, 'ballistic');
+                }
+            }, 5000); // טיל כל 5 שניות
+        }
     </script>
 </body>
 </html>
